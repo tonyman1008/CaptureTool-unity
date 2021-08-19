@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.IO;
 
 public class CaptureManager : MonoBehaviour
 {
@@ -10,59 +11,82 @@ public class CaptureManager : MonoBehaviour
     public Camera cam = null;
     public GameObject targetObj = null;
 
-    private Texture2D camTex = null;
     private RenderTexture captureRT = null;
-    private bool isRecordRealCam = false;
+
+    private float rotateAngle = 0.0f;
+    private bool capturing = false;
+    private float captureTime = 10f;
 
     void Awake()
     {
-        camTex = new Texture2D(textureWidth, textureHeight, TextureFormat.ARGB32, false);
+        rotateAngle = 0;
+        capturing = false;
+
         cam.targetTexture = new RenderTexture(textureWidth, textureHeight, 24, RenderTextureFormat.ARGB32);
         cam.backgroundColor = Color.clear;
     }
 
-    void LateUpdate()
+    public void SaveRenderTextureToFile(RenderTexture rTex, string fileName)
     {
-        captureRT = cam.targetTexture;
+        RenderTexture.active = rTex;
+        Texture2D tex = new Texture2D(textureWidth, textureHeight, TextureFormat.ARGB32, false);
+        tex.ReadPixels(new Rect(0, 0, rTex.width, rTex.height), 0, 0);
+        tex.Apply();
 
-        if (Input.GetKeyDown(KeyCode.C) && !isRecordRealCam)
-        {
-            rotateTargetObj();
-            Debug.Log("start capture");
-            isRecordRealCam = true;
-            Debug.Log(captureRT);
-            toTexture2D(captureRT, camTex);
-            savePic(camTex, "/output/test.png");
-        }
-    }
-
-    public void savePic(Texture2D tex, string fileName)
-    {
         byte[] bytes;
         bytes = tex.EncodeToPNG();
 
-        string path = Application.streamingAssetsPath + fileName;
+        //create folder
+        string objectFolderName = targetObj.name;
+        createFolder(objectFolderName);
+
+        string path = Application.streamingAssetsPath + "/output/"+ objectFolderName +"/"+ fileName;
         System.IO.File.WriteAllBytes(path, bytes);
         Debug.Log("save" + path);
         return;
     }
 
-    public void rotateTargetObj()
+    public void createFolder(string folderName)
     {
-        targetObj.transform.Rotate(new Vector3(0, 90, 0));
+        var folder = Directory.CreateDirectory(Application.streamingAssetsPath + "/output/"+ folderName); 
     }
 
-    Texture2D toTexture2D(RenderTexture rTex, Texture2D tex)
+    public void setTargetObjectRotation(Quaternion quaternion)
     {
-        RenderTexture.active = rTex;
-        tex.ReadPixels(new Rect(0, 0, rTex.width, rTex.height), 0, 0);
-        tex.Apply();
-        return tex;
+        targetObj.transform.rotation = quaternion;
+    }
+
+    private void capture()
+    {
+        if (rotateAngle <= 360)
+        {
+            Debug.Log(rotateAngle);
+            setTargetObjectRotation(Quaternion.Euler(0, rotateAngle, 0));
+            string fileName = rotateAngle + ".png";
+            SaveRenderTextureToFile(cam.targetTexture, fileName);
+            rotateAngle++;
+        }
+        else
+        {
+            CancelInvoke();
+            rotateAngle = 0;
+            capturing = false;
+            Debug.Log("capture complete");
+        }
     }
 
     // Update is called once per frame
     void Update()
     {
+        captureRT = cam.targetTexture;
 
+        if (Input.GetKeyDown(KeyCode.C) && !capturing)
+        {
+            Debug.Log(targetObj.name);
+            Debug.Log("start capture");
+            float invokeRate = captureTime / 360f;
+            InvokeRepeating("capture", 0, invokeRate);
+            capturing = true;
+        }
     }
 }
