@@ -60,7 +60,7 @@ public class CaptureManager : MonoBehaviour
     {
         if (rotateAngle <= 360)
         {
-            Debug.Log(rotateAngle);
+            //Debug.Log(rotateAngle);
             setTargetObjectRotation(Quaternion.Euler(0, rotateAngle, 0));
             string fileName = rotateAngle + ".png";
             SaveRenderTextureToFile(cam.targetTexture, fileName);
