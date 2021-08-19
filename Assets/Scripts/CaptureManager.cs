@@ -5,8 +5,8 @@ using System.IO;
 
 public class CaptureManager : MonoBehaviour
 {
-    public int textureWidth = 1280;
-    public int textureHeight = 720;
+    public int textureWidth = 1600;
+    public int textureHeight = 1600;
 
     public Camera cam = null;
     public GameObject targetObj = null;
@@ -51,9 +51,9 @@ public class CaptureManager : MonoBehaviour
         var folder = Directory.CreateDirectory(Application.streamingAssetsPath + "/output/"+ folderName); 
     }
 
-    public void setTargetObjectRotation(Quaternion quaternion)
+    public void rotateObjAlongYAxis(int deg)
     {
-        targetObj.transform.rotation = quaternion;
+        targetObj.transform.Rotate(new Vector3(0, deg, 0));
     }
 
     private void capture()
@@ -61,7 +61,7 @@ public class CaptureManager : MonoBehaviour
         if (rotateAngle <= 360)
         {
             //Debug.Log(rotateAngle);
-            setTargetObjectRotation(Quaternion.Euler(0, rotateAngle, 0));
+            rotateObjAlongYAxis(1);
             string fileName = rotateAngle + ".png";
             SaveRenderTextureToFile(cam.targetTexture, fileName);
             rotateAngle++;
