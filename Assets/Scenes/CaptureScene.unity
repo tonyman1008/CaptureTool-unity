@@ -316,13 +316,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b6e00c4ecf446d1498074eefd060cb9d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  textureWidth: 1000
-  textureHeight: 1000
   cam: {fileID: 2084076063}
   targetObj: {fileID: 8562534216009348651}
   testPoints: {fileID: 7793595844433009098, guid: 01a9ea4446b481d4aa03787473e1bd8b,
     type: 3}
-  correspondencePointsTrans: []
+  textureWidth: 1000
+  textureHeight: 1000
+  sampleVerticesAmount: 80
+  samplePointsTrans: []
+  _matchPointSeqData:
+    matchPointSeqData: []
 --- !u!4 &1181803132
 Transform:
   m_ObjectHideFlags: 0

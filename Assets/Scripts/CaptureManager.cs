@@ -5,24 +5,27 @@ using System.IO;
 
 public class CaptureManager : MonoBehaviour
 {
-    public int textureWidth = 1000;
-    public int textureHeight = 1000;
-
+    // GameObject
     public Camera cam = null;
     public GameObject targetObj = null;
 
-    private RenderTexture captureRT = null;
-
-    private float rotateAngle = 0.0f;
-    private bool capturing = false;
-    private float captureTime = 36f;
-
     public GameObject testPoints = null;
-    public List<Transform> correspondencePointsTrans = new List<Transform>();
-    [SerializeField] public List<List<Transform>> correspondencePointsTransSeq = new List<List<Transform>>();
 
+    //parameter
+    public int textureWidth = 1000;
+    public int textureHeight = 1000;
+    private float rotateAngle = 0.0f;
+    private float captureTime = 36f;
+    public int sampleVerticesAmount = 80;
+
+    // data
+    public List<Transform> samplePointsTrans = new List<Transform>();
+    [SerializeField] public List<List<SamplePointsData>> samplePointsDataSeq = new List<List<SamplePointsData>>();
     [SerializeField] public MatchPointSeqData _matchPointSeqData = new MatchPointSeqData();
 
+    //state
+    private bool capturing = false;
+    private bool corrTransStoreComplete = false;
 
     void Awake()
     {
@@ -44,7 +47,7 @@ public class CaptureManager : MonoBehaviour
             //SaveRenderTextureToFile(cam.targetTexture, fileName);
 
             // store last frame correspondence trans
-            storeCorrespondenceInPerFrame();
+            storeVisiblePointsInPerFrame();
 
             // ---- next capture ----
 
@@ -57,6 +60,12 @@ public class CaptureManager : MonoBehaviour
             CancelInvoke();
             rotateAngle = 0;
             capturing = false;
+
+            if (corrTransStoreComplete)
+            {
+                outputCorrespondenceData();
+            }
+
             Debug.Log("capture complete");
         }
     }
@@ -92,7 +101,7 @@ public class CaptureManager : MonoBehaviour
 
     private void updateCorrespondenceRaycastState()
     {
-        foreach (Transform tran in correspondencePointsTrans)
+        foreach (Transform tran in samplePointsTrans)
         {
             tran.GetComponent<Correspondence>().checkPointCanBeRaycasted();
         }
@@ -106,7 +115,7 @@ public class CaptureManager : MonoBehaviour
         Debug.Log("vertice length: " + verticesLength);
 
         // random
-        int randomItemCount = 100;
+        int randomItemCount = sampleVerticesAmount;
         List<Vector3> tempVertices = new List<Vector3>(mf.mesh.vertices);
         List<Vector3> randomVertices = new List<Vector3>();
 
@@ -120,7 +129,7 @@ public class CaptureManager : MonoBehaviour
         Debug.Log("randomVertices: " + randomVertices.Count);
 
         Matrix4x4 localToWorld = targetObj.transform.localToWorldMatrix;
-        for (int i = 0; i < randomItemCount; ++i)
+        for (int i = 0; i < randomItemCount; i++)
         {
             GameObject createPoint = Instantiate(testPoints, localToWorld.MultiplyPoint3x4(randomVertices[i]), targetObj.transform.rotation);
             createPoint.transform.parent = targetObj.transform;
@@ -129,62 +138,79 @@ public class CaptureManager : MonoBehaviour
             // attach camera
             createPoint.GetComponent<Correspondence>().camTransform = cam.transform;
             createPoint.GetComponent<Correspondence>().index = i;
-            correspondencePointsTrans.Add(createPoint.transform);
+            samplePointsTrans.Add(createPoint.transform);
         }
     }
 
-    private void storeCorrespondenceInPerFrame()
+    private void storeVisiblePointsInPerFrame()
     {
-        List<Transform> correspondencePointsTrans_temp = new List<Transform>();
-        for(int i=0;i<correspondencePointsTrans.Count;i++)
+        List<SamplePointsData> canRaycastPointsData_temp = new List<SamplePointsData>();
+        for (int i = 0; i < samplePointsTrans.Count; i++)
         {
-            bool canRaycast = correspondencePointsTrans[i].GetComponent<Correspondence>().canBeRaycasted;
+
+            bool canRaycast = samplePointsTrans[i].GetComponent<Correspondence>().canBeRaycasted;
+            int index = samplePointsTrans[i].GetComponent<Correspondence>().index;
+            Vector3 worldPos = samplePointsTrans[i].position;
+
+            // check if the samplePoint can be raycast
             if (canRaycast)
             {
-                correspondencePointsTrans_temp.Add(correspondencePointsTrans[i]);
+                canRaycastPointsData_temp.Add(new SamplePointsData(worldPos, index));
             }
         }
-        correspondencePointsTransSeq.Add(correspondencePointsTrans_temp);
+        samplePointsDataSeq.Add(canRaycastPointsData_temp);
+
+        if (samplePointsDataSeq.Count == 360)
+        {
+            Debug.Log("storeVisiblePointsInPerFrame Complete !!");
+            corrTransStoreComplete = true;
+        }
     }
 
     private void outputCorrespondenceData()
     {
         Debug.Log("Comparing correspondence !!");
 
-        for (int i = 0; i < correspondencePointsTransSeq.Count; i++)
+        // parse data to output correspondence data between two frames.
+        for (int i = 0; i < samplePointsDataSeq.Count; i += 5)
         {
-            List<Transform> srcCorrespondencePointsTrans = new List<Transform>(correspondencePointsTransSeq[i]);
-            List<Transform> tgtCorrespondencePointsTrans;
+
+            List<SamplePointsData> srcSampleData = new List<SamplePointsData>(samplePointsDataSeq[i]);
+            List<SamplePointsData> tgtSampleData;
 
             MatchPointArray _matchPointArray = new MatchPointArray();
 
-            if (i == correspondencePointsTransSeq.Count - 1)
+            if (i == samplePointsDataSeq.Count - 5)
             {
-                tgtCorrespondencePointsTrans = new List<Transform>(correspondencePointsTransSeq[0]);
+                // last frame's target correspondence data is first frame. 
+                tgtSampleData = new List<SamplePointsData>(samplePointsDataSeq[0]);
             }
             else
             {
-                tgtCorrespondencePointsTrans = new List<Transform>(correspondencePointsTransSeq[i + 1]);
+                tgtSampleData = new List<SamplePointsData>(samplePointsDataSeq[i + 5]);
             }
 
             //compare TODO:rewrite logic
-            for (int j = 0; j < srcCorrespondencePointsTrans.Count; j++)
+            for (int j = 0; j < srcSampleData.Count; j++)
             {
-                for (int k = 0; k < tgtCorrespondencePointsTrans.Count; k++)
+                for (int k = 0; k < tgtSampleData.Count; k++)
                 {
-                    int srcIndex = srcCorrespondencePointsTrans[j].GetComponent<Correspondence>().index;
-                    int tgtIndex = tgtCorrespondencePointsTrans[k].GetComponent<Correspondence>().index;
+                    int srcIndex = srcSampleData[j].index;
+                    int tgtIndex = tgtSampleData[k].index;
+
+                    // get correspondence by sample points index
                     if (srcIndex == tgtIndex)
                     {
                         MatchPoint _matchPoint = new MatchPoint();
 
-                        Vector3 srcCorrespondenceScreenPos = cam.WorldToScreenPoint(srcCorrespondencePointsTrans[j].position);
-                        Vector3 tgtCorrespondenceScreenPos = cam.WorldToScreenPoint(tgtCorrespondencePointsTrans[k].position);
+                        // covert to sceen point in capture view
+                        Vector3 srcCorrespondenceScreenPos = cam.WorldToScreenPoint(srcSampleData[j].worldPos);
+                        Vector3 tgtCorrespondenceScreenPos = cam.WorldToScreenPoint(tgtSampleData[k].worldPos);
 
                         _matchPoint.keyPointOne[0] = srcCorrespondenceScreenPos.x;
-                        _matchPoint.keyPointOne[1] = srcCorrespondenceScreenPos.y;
+                        _matchPoint.keyPointOne[1] = textureHeight - srcCorrespondenceScreenPos.y;
                         _matchPoint.keyPointTwo[0] = tgtCorrespondenceScreenPos.x;
-                        _matchPoint.keyPointTwo[1] = tgtCorrespondenceScreenPos.y;
+                        _matchPoint.keyPointTwo[1] = textureHeight - tgtCorrespondenceScreenPos.y;
                         _matchPointArray.matchPoints.Add(_matchPoint);
                     }
                 }
@@ -192,8 +218,8 @@ public class CaptureManager : MonoBehaviour
             _matchPointSeqData.matchPointSeqData.Add(_matchPointArray);
         }
 
-
-        Debug.Log("write json");
+        Debug.Log("matchPointsSeqDataLength" + _matchPointSeqData.matchPointSeqData.Count);
+        Debug.Log("writing json");
         string matchDataStr = JsonUtility.ToJson(_matchPointSeqData);
 
         string filename = Application.streamingAssetsPath + "/output/PotionData.json";
@@ -202,15 +228,13 @@ public class CaptureManager : MonoBehaviour
             File.Delete(filename);
         }
         File.WriteAllText(filename, matchDataStr);
-        Debug.Log("write json complete !!");
+        Debug.Log("Output json complete !!");
 
     }
 
     // Update is called once per frame
     void Update()
     {
-        captureRT = cam.targetTexture;
-
         if (Input.GetKeyDown(KeyCode.C) && !capturing)
         {
             Debug.Log("Camera width " + cam.pixelWidth + " Camera height " + cam.pixelHeight);
@@ -230,7 +254,6 @@ public class CaptureManager : MonoBehaviour
         {
             sampleVertices();
         }
-
     }
 }
 
@@ -251,5 +274,16 @@ public class MatchPoint
 {
     public float[] keyPointOne = new float[2];
     public float[] keyPointTwo = new float[2];
+}
+
+public class SamplePointsData
+{
+    public Vector3 worldPos;
+    public int index;
+    public SamplePointsData(Vector3 _worldPos, int _index)
+    {
+        worldPos = _worldPos;
+        index = _index;
+    }
 }
 
