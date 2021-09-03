@@ -323,6 +323,7 @@ MonoBehaviour:
   textureWidth: 1000
   textureHeight: 1000
   sampleVerticesAmount: 80
+  correspondenceDiffDeg: 5
   samplePointsTrans: []
   _matchPointSeqData:
     matchPointSeqData: []

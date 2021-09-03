@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
+using DataFormat;
 
 public class CaptureManager : MonoBehaviour
 {
@@ -16,7 +17,8 @@ public class CaptureManager : MonoBehaviour
     public int textureHeight = 1000;
     private float rotateAngle = 0.0f;
     private float captureTime = 36f;
-    public int sampleVerticesAmount = 80;
+    public int sampleVerticesAmount = 100;
+    public int correspondenceDiffDeg = 10;
 
     // data
     public List<Transform> samplePointsTrans = new List<Transform>();
@@ -44,10 +46,10 @@ public class CaptureManager : MonoBehaviour
             updateCorrespondenceRaycastState();
 
             string fileName = rotateAngle + ".png";
-            //SaveRenderTextureToFile(cam.targetTexture, fileName);
+            SaveRenderTextureToFile(cam.targetTexture, fileName);
 
             // store last frame correspondence trans
-            storeVisiblePointsInPerFrame();
+            //storeVisiblePointsInPerFrame();
 
             // ---- next capture ----
 
@@ -172,7 +174,7 @@ public class CaptureManager : MonoBehaviour
         Debug.Log("Comparing correspondence !!");
 
         // parse data to output correspondence data between two frames.
-        for (int i = 0; i < samplePointsDataSeq.Count; i += 5)
+        for (int i = 0; i < samplePointsDataSeq.Count; i += correspondenceDiffDeg)
         {
 
             List<SamplePointsData> srcSampleData = new List<SamplePointsData>(samplePointsDataSeq[i]);
@@ -180,14 +182,14 @@ public class CaptureManager : MonoBehaviour
 
             MatchPointArray _matchPointArray = new MatchPointArray();
 
-            if (i == samplePointsDataSeq.Count - 5)
+            if (i == samplePointsDataSeq.Count - correspondenceDiffDeg)
             {
                 // last frame's target correspondence data is first frame. 
                 tgtSampleData = new List<SamplePointsData>(samplePointsDataSeq[0]);
             }
             else
             {
-                tgtSampleData = new List<SamplePointsData>(samplePointsDataSeq[i + 5]);
+                tgtSampleData = new List<SamplePointsData>(samplePointsDataSeq[i + correspondenceDiffDeg]);
             }
 
             //compare TODO:rewrite logic
@@ -239,7 +241,7 @@ public class CaptureManager : MonoBehaviour
         {
             Debug.Log("Camera width " + cam.pixelWidth + " Camera height " + cam.pixelHeight);
             Debug.Log("start capture");
-            sampleVertices();
+            //sampleVertices();
 
             // do capture after 2 seconds to make sure smaple vertice finished.
             float invokeRate = captureTime / 360f;
@@ -257,33 +259,33 @@ public class CaptureManager : MonoBehaviour
     }
 }
 
-[System.Serializable]
-public class MatchPointSeqData
-{
-    public List<MatchPointArray> matchPointSeqData = new List<MatchPointArray>();
-}
+//[System.Serializable]
+//public class MatchPointSeqData
+//{
+//    public List<MatchPointArray> matchPointSeqData = new List<MatchPointArray>();
+//}
 
-[System.Serializable]
-public class MatchPointArray
-{
-    public List<MatchPoint> matchPoints = new List<MatchPoint>();
-}
+//[System.Serializable]
+//public class MatchPointArray
+//{
+//    public List<MatchPoint> matchPoints = new List<MatchPoint>();
+//}
 
-[System.Serializable]
-public class MatchPoint
-{
-    public float[] keyPointOne = new float[2];
-    public float[] keyPointTwo = new float[2];
-}
+//[System.Serializable]
+//public class MatchPoint
+//{
+//    public float[] keyPointOne = new float[2];
+//    public float[] keyPointTwo = new float[2];
+//}
 
-public class SamplePointsData
-{
-    public Vector3 worldPos;
-    public int index;
-    public SamplePointsData(Vector3 _worldPos, int _index)
-    {
-        worldPos = _worldPos;
-        index = _index;
-    }
-}
+//public class SamplePointsData
+//{
+//    public Vector3 worldPos;
+//    public int index;
+//    public SamplePointsData(Vector3 _worldPos, int _index)
+//    {
+//        worldPos = _worldPos;
+//        index = _index;
+//    }
+//}
 
