@@ -46,7 +46,7 @@ public class CaptureManager : MonoBehaviour
             updateCorrespondenceRaycastState();
 
             string fileName = rotateAngle + ".png";
-            SaveRenderTextureToFile(cam.targetTexture, fileName);
+            //SaveRenderTextureToFile(cam.targetTexture, fileName);
 
             // store last frame correspondence trans
             //storeVisiblePointsInPerFrame();
@@ -241,7 +241,7 @@ public class CaptureManager : MonoBehaviour
         {
             Debug.Log("Camera width " + cam.pixelWidth + " Camera height " + cam.pixelHeight);
             Debug.Log("start capture");
-            //sampleVertices();
+            sampleVertices();
 
             // do capture after 2 seconds to make sure smaple vertice finished.
             float invokeRate = captureTime / 360f;
