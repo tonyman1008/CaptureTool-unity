@@ -17,8 +17,9 @@ public class CaptureManager : MonoBehaviour
     public int textureHeight = 1000;
     private float rotateAngle = 0.0f;
     private float captureTime = 36f;
-    public int sampleVerticesAmount = 100;
-    public int correspondenceDiffDeg = 10;
+    public int sampleVerticesAmount = 250;
+    public int correspondenceDiffDeg = 5;
+    public int testDeg = 360;
 
     // data
     public List<Transform> samplePointsTrans = new List<Transform>();
@@ -40,9 +41,9 @@ public class CaptureManager : MonoBehaviour
 
     private void capture()
     {
-        if (rotateAngle < 360)
+        if (rotateAngle < testDeg)
         {
-            //Debug.Log("angle:" + rotateAngle);
+            Debug.Log("angle:" + rotateAngle);
             updateCorrespondenceRaycastState();
 
             string fileName = rotateAngle + ".png";
@@ -116,7 +117,7 @@ public class CaptureManager : MonoBehaviour
         int verticesLength = mf.mesh.vertices.Length;
         Debug.Log("vertice length: " + verticesLength);
 
-        // random
+        // get random vertices in all vertices
         int randomItemCount = sampleVerticesAmount;
         List<Vector3> tempVertices = new List<Vector3>(mf.mesh.vertices);
         List<Vector3> randomVertices = new List<Vector3>();
@@ -130,22 +131,26 @@ public class CaptureManager : MonoBehaviour
 
         Debug.Log("randomVertices: " + randomVertices.Count);
 
+        // get points world position
         Matrix4x4 localToWorld = targetObj.transform.localToWorldMatrix;
         for (int i = 0; i < randomItemCount; i++)
         {
-            //GameObject createPoint = Instantiate(testPoints, localToWorld.MultiplyPoint3x4(randomVertices[i]), targetObj.transform.rotation);
-            //createPoint.transform.parent = targetObj.transform;
-            //createPoint.tag = testPoints.GetComponent<Correspondence>().defaultTagName;
+            GameObject createPoint = Instantiate(testPoints, localToWorld.MultiplyPoint3x4(randomVertices[i]), targetObj.transform.rotation);
+            createPoint.transform.parent = targetObj.transform;
+            createPoint.tag = testPoints.GetComponent<Correspondence>().defaultTagName;
 
-            //// attach camera
-            //createPoint.GetComponent<Correspondence>().camTransform = cam.transform;
-            //createPoint.GetComponent<Correspondence>().index = i;
-            //samplePointsTrans.Add(createPoint.transform);
+            // attach camera
+            createPoint.GetComponent<Correspondence>().camTransform = cam.transform;
+            createPoint.GetComponent<Correspondence>().index = i;
+            samplePointsTrans.Add(createPoint.transform);
         }
     }
 
     private void storeVisiblePointsInPerFrame()
     {
+        Debug.Log("storeVisiblePointsInPerFrame");
+
+        // check all points can raycast(visible in every frame)
         List<SamplePointsData> canRaycastPointsData_temp = new List<SamplePointsData>();
         for (int i = 0; i < samplePointsTrans.Count; i++)
         {
@@ -162,7 +167,7 @@ public class CaptureManager : MonoBehaviour
         }
         samplePointsDataSeq.Add(canRaycastPointsData_temp);
 
-        if (samplePointsDataSeq.Count == 360)
+        if (samplePointsDataSeq.Count >= testDeg)
         {
             Debug.Log("storeVisiblePointsInPerFrame Complete !!");
             corrTransStoreComplete = true;
@@ -172,16 +177,18 @@ public class CaptureManager : MonoBehaviour
     private void outputCorrespondenceData()
     {
         Debug.Log("Comparing correspondence !!");
+        Debug.Log("samplePointsDataSeq.Count : " + samplePointsDataSeq.Count);
 
         // parse data to output correspondence data between two frames.
-        for (int i = 0; i < samplePointsDataSeq.Count; i += correspondenceDiffDeg)
+        for (int i = 0; i < testDeg; i += correspondenceDiffDeg)
         {
-
+            Debug.Log("i + correspondenceDiffDeg" + (i + correspondenceDiffDeg));
             List<SamplePointsData> srcSampleData = new List<SamplePointsData>(samplePointsDataSeq[i]);
             List<SamplePointsData> tgtSampleData;
 
             MatchPointArray _matchPointArray = new MatchPointArray();
 
+            // set data index
             if (i == samplePointsDataSeq.Count - correspondenceDiffDeg)
             {
                 // last frame's target correspondence data is first frame. 
@@ -220,7 +227,7 @@ public class CaptureManager : MonoBehaviour
             _matchPointSeqData.matchPointSeqData.Add(_matchPointArray);
         }
 
-        Debug.Log("matchPointsSeqDataLength" + _matchPointSeqData.matchPointSeqData.Count);
+        Debug.Log("matchPointsSeqDataLength : " + _matchPointSeqData.matchPointSeqData.Count);
         Debug.Log("writing json");
         string matchDataStr = JsonUtility.ToJson(_matchPointSeqData);
 
@@ -250,7 +257,7 @@ public class CaptureManager : MonoBehaviour
         }
         if (Input.GetKeyDown(KeyCode.X))
         {
-            outputCorrespondenceData();
+            updateCorrespondenceRaycastState();
         }
         if (Input.GetKeyDown(KeyCode.Z))
         {

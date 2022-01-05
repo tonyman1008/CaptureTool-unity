@@ -503,6 +503,7 @@ MonoBehaviour:
   textureHeight: 1000
   sampleVerticesAmount: 302
   correspondenceDiffDeg: 5
+  testDeg: 360
   samplePointsTrans: []
   _matchPointSeqData:
     matchPointSeqData: []
@@ -838,6 +839,26 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &2112802172 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4359038527362722391, guid: 210cde5a46f174840b08cc3ed9dedeec,
+    type: 3}
+  m_PrefabInstance: {fileID: 5380607183620515084}
+  m_PrefabAsset: {fileID: 0}
+--- !u!64 &2112802176
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2112802172}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 0
+  serializedVersion: 4
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 4300020, guid: f0783dff9be367d46b12b1755fc86c6c, type: 3}
 --- !u!1001 &5380607183620515084
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -938,7 +959,7 @@ PrefabInstance:
     - target: {fileID: 4368178120051450235, guid: 210cde5a46f174840b08cc3ed9dedeec,
         type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4368178120051450235, guid: 210cde5a46f174840b08cc3ed9dedeec,
         type: 3}

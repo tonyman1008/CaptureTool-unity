@@ -18,14 +18,14 @@ public class ContourSampler : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        ContourPointsArray contourPointsInJson = JsonUtility.FromJson<ContourPointsArray>(jsonFile.text);
-        foreach (ContourPoint contourPoint in contourPointsInJson.contourPoints)
-        {
-            // convert to unity coordinate system
-            Vector2 point = new Vector2(contourPoint.x, imgHeight - contourPoint.y);
-            contour2DPoints.Add(point);
-        }
-        sampleContourPoints();
+        //ContourPointsArray contourPointsInJson = JsonUtility.FromJson<ContourPointsArray>(jsonFile.text);
+        //foreach (ContourPoint contourPoint in contourPointsInJson.contourPoints)
+        //{
+        //    // convert to unity coordinate system
+        //    Vector2 point = new Vector2(contourPoint.x, imgHeight - contourPoint.y);
+        //    contour2DPoints.Add(point);
+        //}
+        //sampleContourPoints();
     }
 
     private void sampleContourPoints()
