@@ -49,7 +49,7 @@ public class CaptureManager : MonoBehaviour
             //SaveRenderTextureToFile(cam.targetTexture, fileName);
 
             // store last frame correspondence trans
-            //storeVisiblePointsInPerFrame();
+            storeVisiblePointsInPerFrame();
 
             // ---- next capture ----
 
@@ -133,14 +133,14 @@ public class CaptureManager : MonoBehaviour
         Matrix4x4 localToWorld = targetObj.transform.localToWorldMatrix;
         for (int i = 0; i < randomItemCount; i++)
         {
-            GameObject createPoint = Instantiate(testPoints, localToWorld.MultiplyPoint3x4(randomVertices[i]), targetObj.transform.rotation);
-            createPoint.transform.parent = targetObj.transform;
-            createPoint.tag = testPoints.GetComponent<Correspondence>().defaultTagName;
+            //GameObject createPoint = Instantiate(testPoints, localToWorld.MultiplyPoint3x4(randomVertices[i]), targetObj.transform.rotation);
+            //createPoint.transform.parent = targetObj.transform;
+            //createPoint.tag = testPoints.GetComponent<Correspondence>().defaultTagName;
 
-            // attach camera
-            createPoint.GetComponent<Correspondence>().camTransform = cam.transform;
-            createPoint.GetComponent<Correspondence>().index = i;
-            samplePointsTrans.Add(createPoint.transform);
+            //// attach camera
+            //createPoint.GetComponent<Correspondence>().camTransform = cam.transform;
+            //createPoint.GetComponent<Correspondence>().index = i;
+            //samplePointsTrans.Add(createPoint.transform);
         }
     }
 
